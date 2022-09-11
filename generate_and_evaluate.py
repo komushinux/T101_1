@@ -136,6 +136,8 @@ def neg_or_pos_rules(rules):
     negative.sort(key=lambda s: len(s[0]))
     positive.sort(key=lambda s: len(s[0]))
 
+    return[negative, positive]
+
 
 def controversy_ab_not_ab(negative, positive):
     for neg in negative:
@@ -146,9 +148,9 @@ def controversy_ab_not_ab(negative, positive):
                 break
             if len(neg[0]) > len(pos[0]):
                 break
+    return [negative, positive]
 
-
-def controversy_not_ab_not_ca(negative, positive):
+def controversy_not_ab_not_ca(negative):
     flag = 0
     for neg_i in negative:
         for neg_j in negative:
@@ -162,6 +164,7 @@ def controversy_not_ab_not_ca(negative, positive):
         if flag == 1:
             flag = 0
             break
+    return negative
 
 
 def and_or_or_rules(rules):
@@ -178,6 +181,8 @@ def and_or_or_rules(rules):
     and_rules = list(set(and_rules))
     or_rules = list(set(or_rules))
 
+    return [and_rules, or_rules]
+
 
 def check_and(and_rules):
     new_facts = []
@@ -189,6 +194,7 @@ def check_and(and_rules):
                 break
         if flag == 1:
             new_facts.append(rule[1])
+    return new_facts
 
 
 def check_or(or_rules):
@@ -198,6 +204,7 @@ def check_or(or_rules):
             if rule[0][i] in facts:
                 new_facts.append(rule[1])
                 break
+    return new_facts
 
 
 def check_not(not_rules):
@@ -210,9 +217,11 @@ def check_not(not_rules):
                 break
         if flag == 1:
             new_facts.append(rule[1])
+    return new_facts
 
 
 def main():
+
 
 
 # check facts vs rules
