@@ -1,3 +1,4 @@
+import bisect
 from random import choice, shuffle, randint
 from time import time
 
@@ -5,7 +6,6 @@ from time import time
 def generate_simple_rules(code_max, n_max, n_generate, log_oper_choice=["and", "or", "not"]):
     rules = []
     for j in range(0, n_generate):
-
         log_oper = choice(log_oper_choice)  # not means and-not (neither)
         if n_max < 2:
             n_max = 2
@@ -21,7 +21,7 @@ def generate_simple_rules(code_max, n_max, n_generate, log_oper_choice=["and", "
         }
         rules.append(rule)
     shuffle(rules)
-    return (rules)
+    return rules
 
 
 def generate_stairway_rules(code_max, n_max, n_generate, log_oper_choice=["and", "or", "not"]):
@@ -115,12 +115,45 @@ rules = generate_simple_rules(100, 4, N)
 facts = generate_rand_facts(100, M)
 print("%d rules generated in %f seconds" % (N, time() - time_start))
 
+
 # load and validate rules
 # YOUR CODE HERE
+
+def neg_or_pos_rules(rules):
+    negative = []
+    positive = []
+    for rule in rules:
+        if 'not' in rule['if'].keys():
+            neg = [list(rule['if'].values())[0], list(rule['then'])]
+            negative.append(neg)
+        else:
+            pos = [list(rule['if'].values())[0], list(rule['then'])]
+            positive.append(pos)
+
+    negative = list(set(negative))
+    positive = list(set(positive))
+
+    negative.sort(key=lambda s: len(s[0]))
+    positive.sort(key=lambda s: len(s[0]))
+
+
+def controversy_a_not_a(negative, positive):
+    for neg in negative:
+        for pos in positive:
+            if neg[0] == pos[0]:
+                negative.remove(neg)
+                positive.remove(pos)
+
+
+
 
 # check facts vs rules
 time_start = time()
 
 # YOUR CODE HERE
 
+
 print("%d facts validated vs %d rules in %f seconds" % (M, N, time() - time_start))
+
+if __name__ == '__main__':
+    main()
