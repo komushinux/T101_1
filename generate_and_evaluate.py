@@ -137,14 +137,82 @@ def neg_or_pos_rules(rules):
     positive.sort(key=lambda s: len(s[0]))
 
 
-def controversy_a_not_a(negative, positive):
+def controversy_ab_not_ab(negative, positive):
     for neg in negative:
         for pos in positive:
-            if neg[0] == pos[0]:
+            if neg[0] == pos[0] and neg[1] == pos[1]:
                 negative.remove(neg)
                 positive.remove(pos)
+                break
+            if len(neg[0]) > len(pos[0]):
+                break
 
 
+def controversy_not_ab_not_ca(negative, positive):
+    flag = 0
+    for neg_i in negative:
+        for neg_j in negative:
+            if len(neg_j[0] > 1):
+                break
+            if neg_i[0] == neg_j[1]:
+                negative.remove(neg_j)
+                negative.remove(neg_i)
+                flag = 1
+                break
+        if flag == 1:
+            flag = 0
+            break
+
+
+def and_or_or_rules(rules):
+    and_rules = []
+    or_rules = []
+    for rule in rules:
+        if 'and' in rule['if'].keys():
+            and_rule = [list(rule['if'].values())[0], list(rule['then'])]
+            and_rules.append(and_rule)
+        else:
+            or_rule = [list(rule['if'].values())[0], list(rule['then'])]
+            and_rules.append(or_rule)
+
+    and_rules = list(set(and_rules))
+    or_rules = list(set(or_rules))
+
+
+def check_and(and_rules):
+    new_facts = []
+    flag = 1
+    for rule in and_rules:
+        for i in range(len(rule[0])):
+            if rule[0][i] not in facts:
+                flag = 0
+                break
+        if flag == 1:
+            new_facts.append(rule[1])
+
+
+def check_or(or_rules):
+    new_facts = []
+    for rule in or_rules:
+        for i in range(len(rule[0])):
+            if rule[0][i] in facts:
+                new_facts.append(rule[1])
+                break
+
+
+def check_not(not_rules):
+    new_facts = []
+    flag = 1
+    for rule in not_rules:
+        for i in range(len(rule[0])):
+            if rule[0][i] in facts:
+                flag = 0
+                break
+        if flag == 1:
+            new_facts.append(rule[1])
+
+
+def main():
 
 
 # check facts vs rules
@@ -152,8 +220,7 @@ time_start = time()
 
 # YOUR CODE HERE
 
-
-print("%d facts validated vs %d rules in %f seconds" % (M, N, time() - time_start))
-
 if __name__ == '__main__':
     main()
+
+print("%d facts validated vs %d rules in %f seconds" % (M, N, time() - time_start))
