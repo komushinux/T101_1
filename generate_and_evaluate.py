@@ -1,4 +1,3 @@
-import bisect
 from random import choice, shuffle, randint
 from time import time
 
@@ -101,15 +100,9 @@ def generate_rand_facts(code_max, M):
     return facts
 
 
-# samples:
-print(generate_simple_rules(100, 4, 10))
-print(generate_random_rules(100, 4, 10))
-print(generate_stairway_rules(100, 4, 10, ["or"]))
-print(generate_ring_rules(100, 4, 10, ["or"]))
-
 # generate rules and facts and check time
 time_start = time()
-N = 100000
+N = 10000
 M = 1000
 rules = generate_simple_rules(100, 4, N)
 facts = generate_rand_facts(100, M)
@@ -124,10 +117,10 @@ def neg_or_pos_rules(rules):
     positive = []
     for rule in rules:
         if 'not' in rule['if'].keys():
-            neg = [list(rule['if'].values())[0], list(rule['then'])]
+            neg = (tuple(tuple(rule['if'].values())[0]), rule['then'])
             negative.append(neg)
         else:
-            pos = [list(rule['if'].values())[0], list(rule['then'])]
+            pos = (tuple(tuple(rule['if'].values())[0]), rule['then'])
             positive.append(pos)
 
     negative = list(set(negative))
@@ -135,14 +128,13 @@ def neg_or_pos_rules(rules):
 
     negative.sort(key=lambda s: len(s[0]))
     positive.sort(key=lambda s: len(s[0]))
-
-    return[negative, positive]
+    return [negative, positive]
 
 
 def controversy_ab_not_ab(negative, positive):
     for neg in negative:
         for pos in positive:
-            if neg[0] == pos[0] and neg[1] == pos[1]:
+            if list(neg[0]).sort == list(pos[0]).sort and neg[1] == pos[1]:
                 negative.remove(neg)
                 positive.remove(pos)
                 break
@@ -150,33 +142,17 @@ def controversy_ab_not_ab(negative, positive):
                 break
     return [negative, positive]
 
-def controversy_not_ab_not_ca(negative):
-    flag = 0
-    for neg_i in negative:
-        for neg_j in negative:
-            if len(neg_j[0] > 1):
-                break
-            if neg_i[0] == neg_j[1]:
-                negative.remove(neg_j)
-                negative.remove(neg_i)
-                flag = 1
-                break
-        if flag == 1:
-            flag = 0
-            break
-    return negative
-
 
 def and_or_or_rules(rules):
     and_rules = []
     or_rules = []
     for rule in rules:
         if 'and' in rule['if'].keys():
-            and_rule = [list(rule['if'].values())[0], list(rule['then'])]
+            and_rule = (tuple(tuple(rule['if'].values())[0]), rule['then'])
             and_rules.append(and_rule)
-        else:
-            or_rule = [list(rule['if'].values())[0], list(rule['then'])]
-            and_rules.append(or_rule)
+        elif 'or' in rule['if'].keys():
+            or_rule = (tuple(tuple(rule['if'].values())[0]), rule['then'])
+            or_rules.append(or_rule)
 
     and_rules = list(set(and_rules))
     or_rules = list(set(or_rules))
@@ -186,13 +162,14 @@ def and_or_or_rules(rules):
 
 def check_and(and_rules):
     new_facts = []
-    flag = 1
+
     for rule in and_rules:
+        flag_and = 1
         for i in range(len(rule[0])):
             if rule[0][i] not in facts:
-                flag = 0
+                flag_and = 0
                 break
-        if flag == 1:
+        if flag_and == 1:
             new_facts.append(rule[1])
     return new_facts
 
@@ -209,8 +186,8 @@ def check_or(or_rules):
 
 def check_not(not_rules):
     new_facts = []
-    flag = 1
     for rule in not_rules:
+        flag = 1
         for i in range(len(rule[0])):
             if rule[0][i] in facts:
                 flag = 0
@@ -221,7 +198,15 @@ def check_not(not_rules):
 
 
 def main():
+    neg, pos = neg_or_pos_rules(rules)
+    neg, pos = controversy_ab_not_ab(neg, pos)
+    and_rules, or_rules = and_or_or_rules(rules)
 
+    new_facts_and = check_and(and_rules)
+    new_facts_or = check_or(or_rules)
+    new_facts_not = check_not(neg)
+
+    return set(new_facts_or + new_facts_not + new_facts_and + facts)
 
 
 # check facts vs rules
@@ -230,6 +215,6 @@ time_start = time()
 # YOUR CODE HERE
 
 if __name__ == '__main__':
-    main()
+    a = main()
 
 print("%d facts validated vs %d rules in %f seconds" % (M, N, time() - time_start))
