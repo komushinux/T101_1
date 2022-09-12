@@ -1,3 +1,4 @@
+#FROM python:3.8-slim-buster
 FROM python:3.8-slim-buster
 
 WORKDIR /.
@@ -7,4 +8,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 EXPOSE 5000
-CMD python3 main.py
+CMD python3 generate_and_evaluate.py
