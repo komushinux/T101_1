@@ -102,7 +102,7 @@ def generate_rand_facts(code_max, M):
 
 # generate rules and facts and check time
 time_start = time()
-N = 10000
+N = 100000
 M = 1000
 rules = generate_simple_rules(100, 4, N)
 facts = generate_rand_facts(100, M)
@@ -114,50 +114,37 @@ print("%d rules generated in %f seconds" % (N, time() - time_start))
 
 def neg_or_pos_rules(rules):
     negative = []
-    positive = []
-    for rule in rules:
-        if 'not' in rule['if'].keys():
-            neg = (tuple(tuple(rule['if'].values())[0]), rule['then'])
-            negative.append(neg)
-        else:
-            pos = (tuple(tuple(rule['if'].values())[0]), rule['then'])
-            positive.append(pos)
-
-    negative = list(set(negative))
-    positive = list(set(positive))
-
-    negative.sort(key=lambda s: len(s[0]))
-    positive.sort(key=lambda s: len(s[0]))
-    return [negative, positive]
-
-
-def controversy_ab_not_ab(negative, positive):
-    for neg in negative:
-        for pos in positive:
-            if list(neg[0]).sort == list(pos[0]).sort and neg[1] == pos[1]:
-                negative.remove(neg)
-                positive.remove(pos)
-                break
-            if len(neg[0]) > len(pos[0]):
-                break
-    return [negative, positive]
-
-
-def and_or_or_rules(rules):
     and_rules = []
     or_rules = []
+
     for rule in rules:
-        if 'and' in rule['if'].keys():
+        keys = rule['if'].keys()
+        if 'not' in keys:
+            neg = (tuple(tuple(rule['if'].values())[0]), rule['then'])
+            negative.append(neg)
+        elif 'and' in keys:
             and_rule = (tuple(tuple(rule['if'].values())[0]), rule['then'])
             and_rules.append(and_rule)
-        elif 'or' in rule['if'].keys():
+        elif 'or' in keys:
             or_rule = (tuple(tuple(rule['if'].values())[0]), rule['then'])
             or_rules.append(or_rule)
 
+    negative = list(set(negative))
     and_rules = list(set(and_rules))
     or_rules = list(set(or_rules))
+    return [and_rules, or_rules, negative]
 
-    return [and_rules, or_rules]
+
+def controversy_ab_not_ab(negative, and_rules, or_rules):
+    for neg in negative:
+        for pos in list(set(and_rules + or_rules)):
+            if neg[1] == pos[1] and list(neg[0]).sort == list(pos[0]).sort:
+                negative.remove(neg)
+                if pos in and_rules:
+                    and_rules.remove(pos)
+                else:
+                    or_rules.remove(pos)
+    return [negative, and_rules, or_rules]
 
 
 def check_and(and_rules):
@@ -198,9 +185,8 @@ def check_not(not_rules):
 
 
 def main():
-    neg, pos = neg_or_pos_rules(rules)
-    neg, pos = controversy_ab_not_ab(neg, pos)
-    and_rules, or_rules = and_or_or_rules(rules)
+    and_rules, or_rules, neg = neg_or_pos_rules(rules)
+    neg, and_rules, or_rules = controversy_ab_not_ab(neg, and_rules, or_rules)
 
     new_facts_and = check_and(and_rules)
     new_facts_or = check_or(or_rules)
@@ -215,6 +201,7 @@ time_start = time()
 # YOUR CODE HERE
 
 if __name__ == '__main__':
-    a = main()
+    res_facts = main()
 
 print("%d facts validated vs %d rules in %f seconds" % (M, N, time() - time_start))
+print(res_facts)
