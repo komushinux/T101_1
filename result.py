@@ -152,19 +152,19 @@ def and_or_or_rules(positive):
     return [and_rules, or_rules]
 
 
-def check_or(or_rules, rang, res, or_mass):
+def check_or(or_rules, rang, res, or_mass, max_rang):
     for rule in or_rules:
         if rang in rule[0]:
             buf = list(rule[0].values())[0]
             for i in range(len(buf)):
                 if buf[i] in facts:
-                    # добавить максимальный ранг + 1 к новому факту в массиве or_mass
-                    or_mass.append({buf[i]: rule[1]})
+                    max_rang += 1  # чтоб потом знать до какого ранга обходить
+                    or_mass.append({rang + 1: rule[1]})
                     res[rule[1]] = 1
                     break
 
 
-def check_and(and_rules, rang, res, and_mass):
+def check_and(and_rules, rang, res, and_mass, max_rang):
     for rule in and_rules:
         flag_and = 1
         if rang in rule[0]:
@@ -177,18 +177,12 @@ def check_and(and_rules, rang, res, and_mass):
             if flag_and == 1:
                 for i in range(len(buf)):
                     # если все есть то бахаю их добавляю
-                    and_mass.append({buf[i]: rule[1]})
+                    if rang + 1 > max_rang:
+                        max_rang = rang + 1  # чтоб потом знать до какого ранга обходить
+                    and_mass.append({rang + 1: rule[1]})
                     res[rule[1]] = 1
 
 
-# def check_or(or_rules):
-#     new_facts = []
-#     for rule in or_rules:
-#         for i in range(len(rule[0])):
-#             if rule[0][i] in facts:
-#                 new_facts.append(rule[1])
-#                 break
-#     return new_facts
 
 
 def check_not(not_rules):
