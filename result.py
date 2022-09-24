@@ -153,6 +153,7 @@ def and_or_or_rules(positive):
 
 
 def check_or(or_rules, rang, res, or_mass, max_rang):
+    is_found = 0
     for rule in or_rules:
         buf = list(rule[0].values())[0]
         if rang in rule[0]:
@@ -161,6 +162,7 @@ def check_or(or_rules, rang, res, or_mass, max_rang):
                     max_rang += 1  # чтоб потом знать до какого ранга обходить
                     or_mass.append({rang + 1: rule[1]})
                     res[rule[1]] = 1
+                    is_found = 1
                     break
         else:
             # тут же проверка на наличие полученного ранее факта в каком-либо из правил or
@@ -170,9 +172,12 @@ def check_or(or_rules, rang, res, or_mass, max_rang):
                         max_rang += 1  # чтоб потом знать до какого ранга обходить
                         or_mass.append({rang + 1: rule[1]})
                         res[rule[1]] = 1
+                        is_found = 1
+    return is_found
 
 
 def check_and(and_rules, rang, res, and_mass, max_rang):
+    is_found = 0
     for rule in and_rules:
         flag_and = 1
         # из условной части беру массив фактов
@@ -190,6 +195,7 @@ def check_and(and_rules, rang, res, and_mass, max_rang):
                         max_rang = rang + 1  # чтоб потом знать до какого ранга обходить
                     and_mass.append({rang + 1: rule[1]})
                     res[rule[1]] = 1
+                    is_found = 1
         else:
             # тут же проверка на наличие полученного ранее факта в каком-либо из правил or
             for and_mini in and_mass:
@@ -206,36 +212,54 @@ def check_and(and_rules, rang, res, and_mass, max_rang):
                                 max_rang = rang + 1  # чтоб потом знать до какого ранга обходить
                             and_mass.append({rang + 1: rule[1]})
                             res[rule[1]] = 1
+                            is_found = 1
+    return is_found
 
 
-def check_not(not_rules):
-    new_facts = []
+def check_not(not_rules, res):
+    is_found = 0
     for rule in not_rules:
         flag = 1
+        buf = list(rule[0].values())[0]
         for i in range(len(rule[0])):
-            if rule[0][i] in facts:
+            if buf[i] in facts or buf[i] in res:
                 flag = 0
                 break
         if flag == 1:
-            new_facts.append(rule[1])
-    return new_facts
+            res[rule[1]] = 1
+            is_found = 1
+    return is_found
 
 
 def main():
     res = [None] * 10100
+    res_facts = []
     or_mass = []
     and_mass = []
-    max_rang = 1
+    rang = 1  # начальный ранг
+    max_rang = 1  # максимальный ранг
 
     neg, pos = neg_or_pos_rules(rules)
     neg, pos = controversy_ab_not_ab(neg, pos)
     and_rules, or_rules = and_or_or_rules(pos)
 
-    check_and(and_rules, 1, res, and_mass, max_rang)
-    check_or(or_rules, 1, res, or_mass, max_rang)
-    new_facts_not = check_not(neg)
+    while 1:
+        flag = 0
+        flag += check_and(and_rules, rang, res, and_mass, max_rang)
+        flag += check_or(or_rules, rang, res, or_mass, max_rang)
+        flag += check_not(neg, res)
+        # если ранг не вырос, то вложенностей больше нет
+        if flag == 0:
+            break
+        rang += 1
 
-    return set(new_facts_not + facts)
+    index = 0
+    while index < 10100:
+        if res[index] == 1:
+            res_facts.append(index)
+        index += 1
+
+    return res_facts
 
 
 # check facts vs rules
@@ -247,3 +271,4 @@ if __name__ == '__main__':
     result = main()
 
 print("%d facts validated vs %d rules in %f seconds" % (M, N, time() - time_start))
+print(result)
