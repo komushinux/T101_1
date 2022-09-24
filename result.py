@@ -154,35 +154,58 @@ def and_or_or_rules(positive):
 
 def check_or(or_rules, rang, res, or_mass, max_rang):
     for rule in or_rules:
+        buf = list(rule[0].values())[0]
         if rang in rule[0]:
-            buf = list(rule[0].values())[0]
             for i in range(len(buf)):
                 if buf[i] in facts:
                     max_rang += 1  # чтоб потом знать до какого ранга обходить
                     or_mass.append({rang + 1: rule[1]})
                     res[rule[1]] = 1
                     break
+        else:
+            # тут же проверка на наличие полученного ранее факта в каком-либо из правил or
+            for or_mini in or_mass:
+                if rang in or_mini:
+                    if list(or_mini.values())[0] in buf:
+                        max_rang += 1  # чтоб потом знать до какого ранга обходить
+                        or_mass.append({rang + 1: rule[1]})
+                        res[rule[1]] = 1
 
 
 def check_and(and_rules, rang, res, and_mass, max_rang):
     for rule in and_rules:
         flag_and = 1
+        # из условной части беру массив фактов
+        buf = list(rule[0].values())[0]
+
         if rang in rule[0]:
-            # из условной части беру массив фактов
-            buf = list(rule[0].values())[0]
             for i in range(len(buf)):
                 if buf[i] not in facts:
                     flag_and = 0
                     break
             if flag_and == 1:
+                # если все есть то бахаю их в res
                 for i in range(len(buf)):
-                    # если все есть то бахаю их добавляю
                     if rang + 1 > max_rang:
                         max_rang = rang + 1  # чтоб потом знать до какого ранга обходить
                     and_mass.append({rang + 1: rule[1]})
                     res[rule[1]] = 1
-
-
+        else:
+            # тут же проверка на наличие полученного ранее факта в каком-либо из правил or
+            for and_mini in and_mass:
+                # если факт уже добавлен, то не нужно проверять правило
+                if res[rule[1]] != 1 and rang in and_mini:
+                    for i in range(len(buf)):
+                        if buf[i] not in facts:
+                            flag_and = 0
+                            break
+                    if flag_and == 1:
+                        # если все есть то бахаю их в res
+                        for i in range(len(buf)):
+                            if rang + 1 > max_rang:
+                                max_rang = rang + 1  # чтоб потом знать до какого ранга обходить
+                            and_mass.append({rang + 1: rule[1]})
+                            res[rule[1]] = 1
 
 
 def check_not(not_rules):
@@ -202,13 +225,14 @@ def main():
     res = [None] * 10100
     or_mass = []
     and_mass = []
+    max_rang = 1
 
     neg, pos = neg_or_pos_rules(rules)
     neg, pos = controversy_ab_not_ab(neg, pos)
     and_rules, or_rules = and_or_or_rules(pos)
 
-    check_and(and_rules, 1, res, and_mass)
-    check_or(or_rules, 1, res, or_mass)
+    check_and(and_rules, 1, res, and_mass, max_rang)
+    check_or(or_rules, 1, res, or_mass, max_rang)
     new_facts_not = check_not(neg)
 
     return set(new_facts_not + facts)
