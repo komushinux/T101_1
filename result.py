@@ -5,6 +5,7 @@ from time import time
 
 
 def generate_simple_rules(code_max, n_max, n_generate, log_op_choice=None):
+    """generate_simple_rules"""
     if log_op_choice is None:
         log_op_choice = ["and", "or", "not"]
     rules_list = []
@@ -27,14 +28,14 @@ def generate_simple_rules(code_max, n_max, n_generate, log_op_choice=None):
 
 
 def generate_stairway_rules(code_max, n_max, n_generate, log_op_choice=None):
+    """generate_stairway_rules"""
     if log_op_choice is None:
         log_op_choice = ["and", "or", "not"]
     rules_list = []
     for j in range(0, n_generate):
 
         log_opera = choice(log_op_choice)  # not means and-not (neither)
-        if n_max < 2:
-            n_max = 2
+        n_max = max(n_max, 2)
         n_items = randint(2, n_max)
         items = []
         for i in range(0, n_items):
@@ -51,6 +52,7 @@ def generate_stairway_rules(code_max, n_max, n_generate, log_op_choice=None):
 
 
 def generate_ring_rules(code_max, n_max, n_generate, log_op_choice=None):
+    """generate_ring_rules"""
     if log_op_choice is None:
         log_op_choice = ["and", "or", "not"]
     rules_list = generate_stairway_rules(code_max, n_max, n_generate - 1, log_op_choice)
@@ -72,6 +74,7 @@ def generate_ring_rules(code_max, n_max, n_generate, log_op_choice=None):
 
 
 def generate_random_rules(code_max, n_max, n_generate, log_op_choice=None):
+    """generate_random_rules"""
     if log_op_choice is None:
         log_op_choice = ["and", "or", "not"]
     rules_list = []
@@ -95,12 +98,14 @@ def generate_random_rules(code_max, n_max, n_generate, log_op_choice=None):
 
 
 def generate_seq_facts(max_value):
+    """generate_seq_facts"""
     facts_list = list(range(0, max_value))
     shuffle(facts_list)
     return facts_list
 
 
 def generate_rand_facts(code_max, max_value):
+    """generate_rand_facts"""
     facts_list = []
     for i in range(0, max_value):
         facts_list.append(randint(0, code_max))
@@ -187,7 +192,8 @@ def check_or(or_rules, rang, res, or_mass, max_rang):
         else:
             # тут же проверка на наличие полученного ранее факта в каком-либо из правил or
             for or_mini in or_mass:
-                if rang in or_mini:
+                # Если есть в res, то нового факта не появится, возможен цикл
+                if rang in or_mini and res[rule[1]] != 1:
                     if list(or_mini.values())[0] in buf:
                         max_rang = rang + 1  # чтоб потом знать до какого ранга обходить
                         or_mass.append({max_rang: rule[1]})
@@ -220,15 +226,14 @@ def check_and(and_rules, rang, res, and_mass, max_rang):
                     flag_and = 0
                     break
             if flag_and == 1:
-                # если все есть то бахаю их в res
-                for i in range(len(buf)):
-                    max_rang = 2  # чтоб потом знать до какого ранга обходить
-                    and_mass.append({rang + 1: rule[1]})
-                    res[rule[1]] = 1
+                # если все есть, то в res
+                max_rang = 2  # чтоб потом знать до какого ранга обходить
+                and_mass.append({rang + 1: rule[1]})
+                res[rule[1]] = 1
         else:
-            # Если ранг > 1 и такие правила есть (т.е. как минимум из and правил хоть одно ранее срабатывало)
+            # Если ранг>1 и как минимум из and правил хоть одно ранее срабатывало
             for and_mini in and_mass:
-                # Если факт (из части "then") уже добавлен, то не нужно проверять правило (нового факта не будет)
+                # Если из части "then" уже добавлен, то нового факта нет, но возможен цикл
                 if res[rule[1]] != 1 and rang in and_mini:
                     for i in range(len(buf)):
                         # Хоть 1 факт не совпал - дропаем
@@ -236,11 +241,10 @@ def check_and(and_rules, rang, res, and_mass, max_rang):
                             flag_and = 0
                             break
                     if flag_and == 1:
-                        # если все есть то бахаю их в res
-                        for i in range(len(buf)):
-                            max_rang = max(rang + 1, max_rang)  # чтоб потом знать до какого ранга обходить
-                            and_mass.append({rang + 1: rule[1]})
-                            res[rule[1]] = 1
+                        # если все есть, то в res
+                        max_rang = max(rang + 1, max_rang)
+                        and_mass.append({rang + 1: rule[1]})
+                        res[rule[1]] = 1
     return max_rang
 
 
