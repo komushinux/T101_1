@@ -114,42 +114,35 @@ print("%d rules generated in %f seconds" % (N, time() - time_start))
 
 
 def neg_or_pos_rules(rules):
-    negative = []
-    positive = []
+    not_rules = []
+    and_rules = []
+    or_rules = []
     for rule in rules:
         if 'not' in rule['if'].keys():
             neg = [{1: list(rule['if'].values())[0]}, rule['then']]
-            if neg not in negative:
-                negative.append(neg)
+            if neg not in not_rules:
+                not_rules.append(neg)
+        elif 'and' in rule['if'].keys():
+            and_rule = [{1: list(rule['if'].values())[0]}, rule['then']]
+            if and_rule not in and_rules:
+                and_rules.append(and_rule)
         else:
-            pos = [{1: list(rule['if'].values())[0]}, rule['then'], list(rule['if'].keys())[0]]
-            if pos not in positive:
-                positive.append(pos)
-
-    # negative.sort(key=lambda s: len(s[0]))
-    # positive.sort(key=lambda s: len(s[0]))
-    return [negative, positive]
+            or_rule = [{1: list(rule['if'].values())[0]}, rule['then']]
+            if or_rule not in or_rules:
+                or_rules.append(or_rule)
+    return [not_rules, and_rules, or_rules]
 
 
-def controversy_ab_not_ab(negative, positive):
-    for neg in negative:
-        for pos in positive:
-            # print(list(pos[0].values())[0])
+def controversy_ab_not_ab(not_rules, and_rules, or_rules):
+    for neg in not_rules:
+        for pos in and_rules:
             if neg[1] == pos[1] and list(neg[0]).sort == list(pos[0]).sort:
-                negative.remove(neg)
-                positive.remove(pos)
-    return [negative, positive]
-
-
-def and_or_or_rules(positive):
-    and_rules = []
-    or_rules = []
-    for pos in positive:
-        if pos[2] == 'and':
-            and_rules.append([pos[0], pos[1]])
-        else:
-            or_rules.append([pos[0], pos[1]])
-    return [and_rules, or_rules]
+                not_rules.remove(neg)
+                and_rules.remove(pos)
+        for pos in or_rules:
+            if neg[1] == pos[1] and list(neg[0]).sort == list(pos[0]).sort:
+                not_rules.remove(neg)
+                or_rules.remove(pos)
 
 
 def check_or(or_rules, rang, res, or_mass, max_rang):
@@ -197,7 +190,6 @@ def check_and(and_rules, rang, res, and_mass, max_rang):
                     res[rule[1]] = 1
                     is_found = 1
         else:
-            # тут же проверка на наличие полученного ранее факта в каком-либо из правил or
             for and_mini in and_mass:
                 # если факт уже добавлен, то не нужно проверять правило
                 if res[rule[1]] != 1 and rang in and_mini:
@@ -239,12 +231,13 @@ def main():
     rang = 1  # начальный ранг
     max_rang = 1  # максимальный ранг
 
-    neg, pos = neg_or_pos_rules(rules)
-    neg, pos = controversy_ab_not_ab(neg, pos)
-    and_rules, or_rules = and_or_or_rules(pos)
+    neg, and_rules, or_rules = neg_or_pos_rules(rules)
 
     while 1:
         flag = 0
+        # каждый раз изменяется пул фактов, заново ищем противоречия
+        controversy_ab_not_ab(neg, and_rules, or_rules)
+
         flag += check_and(and_rules, rang, res, and_mass, max_rang)
         flag += check_or(or_rules, rang, res, or_mass, max_rang)
         flag += check_not(neg, res)
