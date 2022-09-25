@@ -319,4 +319,3 @@ time_start = time()
 if __name__ == '__main__':
     result = main()
 print(f"{M} facts validated vs {N} rules in {time() - time_start} seconds")
-print(result)
