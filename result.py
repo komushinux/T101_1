@@ -145,6 +145,15 @@ def controversy_ab_not_ab(not_rules, and_rules, or_rules):
                 or_rules.remove(pos)
 
 
+def controversy_not_a_b_not_b_a(not_rules):
+    for rule_i in not_rules:
+        buf = list(rule_i[0].values())[0]
+        if len(buf) == 1:
+            for rule_j in not_rules:
+                if buf[0] == rule_j[1]:
+                    not_rules.remove(rule_i, rule_j)
+
+
 def check_or(or_rules, rang, res, or_mass, max_rang):
     is_found = 0
     for rule in or_rules:
@@ -231,16 +240,17 @@ def main():
     rang = 1  # начальный ранг
     max_rang = 1  # максимальный ранг
 
-    neg, and_rules, or_rules = neg_or_pos_rules(rules)
+    not_rules, and_rules, or_rules = neg_or_pos_rules(rules)
+    controversy_not_a_b_not_b_a(not_rules)
 
     while 1:
         flag = 0
         # каждый раз изменяется пул фактов, заново ищем противоречия
-        controversy_ab_not_ab(neg, and_rules, or_rules)
+        controversy_ab_not_ab(not_rules, and_rules, or_rules)
 
         flag += check_and(and_rules, rang, res, and_mass, max_rang)
         flag += check_or(or_rules, rang, res, or_mass, max_rang)
-        flag += check_not(neg, res)
+        flag += check_not(not_rules, res)
         # если ранг не вырос, то вложенностей больше нет
         if flag == 0:
             break
