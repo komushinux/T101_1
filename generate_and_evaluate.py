@@ -121,6 +121,21 @@ facts = generate_rand_facts(100, M)
 print(f"{N} rules generated in {time() - time_start} seconds")
 
 
+# facts = [1, 2]
+# rules = [
+#     {'if': {'and': [1, 2]}, 'then': 3},
+#     {'if': {'or': [5, 7]}, 'then': 1},
+#     {'if': {'or': [3, 2]}, 'then': 5},
+#     {'if': {'not': [1234, 2213]}, 'then': 3},
+#
+#     {'if': {'not': [9]}, 'then': 8},
+#     {'if': {'not': [8]}, 'then': 9},
+#
+#     {'if': {'or': [1, 2]}, 'then': 9},
+#     {'if': {'not': [2, 1]}, 'then': 9},
+# ]
+
+
 def neg_or_pos_rules(rules_list):
     """gets all rules and returns or/and/not-rules massive"""
     not_rules = []
@@ -144,11 +159,11 @@ def controversy_ab_not_ab(not_rules, and_rules, or_rules):
     """resolves the contradiction like (a->b), (not a->b)"""
     for neg in not_rules:
         for pos in and_rules:
-            if neg[1] == pos[1] and list(neg[0]).sort == list(pos[0]).sort:
+            if neg[1] == pos[1] and sorted(list(pos[0].values())[0]) == sorted(list(neg[0].values())[0]):
                 not_rules.remove(neg)
                 and_rules.remove(pos)
         for pos in or_rules:
-            if neg[1] == pos[1] and list(neg[0]).sort == list(pos[0]).sort:
+            if neg[1] == pos[1] and sorted(list(pos[0].values())[0]) == sorted(list(neg[0].values())[0]):
                 not_rules.remove(neg)
                 or_rules.remove(pos)
 
@@ -160,7 +175,8 @@ def controversy_not_a_b_not_b_a(not_rules):
         if len(buf) == 1:
             for rule_j in not_rules:
                 if buf[0] == rule_j[1]:
-                    not_rules.remove(rule_i, rule_j)
+                    not_rules.remove(rule_i)
+                    not_rules.remove(rule_j)
 
 
 def check_or(or_rules, rang, res, or_mass, max_rang):
@@ -295,6 +311,7 @@ def main():
     # Факты только появляются, этот тип противоречий не будет расти с ростом бз
     controversy_not_a_b_not_b_a(not_rules)
 
+    flag_time = time()
     while rang <= max_rang:
         # каждый раз изменяется пул фактов, заново ищем противоречия
         controversy_ab_not_ab(not_rules, and_rules, or_rules)
@@ -311,6 +328,8 @@ def main():
             res_facts.append(index)
         index += 1
 
+    print(f"{M} facts validated vs {N} rules in {time() - flag_time} seconds")
+
     return res_facts
 
 
@@ -318,4 +337,4 @@ time_start = time()
 
 if __name__ == '__main__':
     result = main()
-print(f"{M} facts validated vs {N} rules in {time() - time_start} seconds")
+    print(result)
